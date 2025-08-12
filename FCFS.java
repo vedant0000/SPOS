@@ -1,15 +1,5 @@
 import java.util.*;
 
-class Process {
-    int pid, arrivalTime, burstTime, completionTime, turnAroundTime, waitingTime;
-
-    Process(int pid, int at, int bt) {
-        this.pid = pid;
-        this.arrivalTime = at;
-        this.burstTime = bt;
-    }
-}
-
 public class FCFS {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -18,42 +8,68 @@ public class FCFS {
         System.out.print("Enter number of processes: ");
         int n = sc.nextInt();
 
-        Process[] processes = new Process[n];
+        int[] pid = new int[n];
+        int[] at = new int[n];
+        int[] bt = new int[n];
+        int[] ct = new int[n];
+        int[] tat = new int[n];
+        int[] wt = new int[n];
 
+        // Input process details
         for (int i = 0; i < n; i++) {
-            System.out.println("\nEnter details for Process " + (i + 1) + ":");
+            pid[i] = i + 1;
+            System.out.println("\nEnter details for Process " + pid[i] + ":");
             System.out.print("Arrival Time: ");
-            int at = sc.nextInt();
+            at[i] = sc.nextInt();
             System.out.print("Burst Time: ");
-            int bt = sc.nextInt();
-            processes[i] = new Process(i + 1, at, bt);
+            bt[i] = sc.nextInt();
         }
 
-        // Sort by Arrival Time
-        Arrays.sort(processes, Comparator.comparingInt(p -> p.arrivalTime));
+        // Sort processes by arrival time
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = i + 1; j < n; j++) {
+                if (at[i] > at[j]) {
+                    // Swap arrival time
+                    int temp = at[i];
+                    at[i] = at[j];
+                    at[j] = temp;
+
+                    // Swap burst time
+                    temp = bt[i];
+                    bt[i] = bt[j];
+                    bt[j] = temp;
+
+                    // Swap process ID
+                    temp = pid[i];
+                    pid[i] = pid[j];
+                    pid[j] = temp;
+                }
+            }
+        }
 
         int currentTime = 0;
         double totalTAT = 0, totalWT = 0;
 
+        // Calculate times
         for (int i = 0; i < n; i++) {
-            Process p = processes[i];
-            if (currentTime < p.arrivalTime) {
-                currentTime = p.arrivalTime; // CPU waits if process hasn't arrived
+            if (currentTime < at[i]) {
+                currentTime = at[i]; // Wait for process to arrive
             }
-            p.completionTime = currentTime + p.burstTime;
-            p.turnAroundTime = p.completionTime - p.arrivalTime;
-            p.waitingTime = p.turnAroundTime - p.burstTime;
+            ct[i] = currentTime + bt[i];
+            tat[i] = ct[i] - at[i];
+            wt[i] = tat[i] - bt[i];
 
-            totalTAT += p.turnAroundTime;
-            totalWT += p.waitingTime;
+            totalTAT += tat[i];
+            totalWT += wt[i];
 
-            currentTime = p.completionTime;
+            currentTime = ct[i];
         }
 
+        // Output
         System.out.println("\nPID\tAT\tBT\tCT\tTAT\tWT");
-        for (Process p : processes) {
-            System.out.println("P" + p.pid + "\t" + p.arrivalTime + "\t" + p.burstTime + "\t" +
-                    p.completionTime + "\t" + p.turnAroundTime + "\t" + p.waitingTime);
+        for (int i = 0; i < n; i++) {
+            System.out.println("P" + pid[i] + "\t" + at[i] + "\t" + bt[i] + "\t" +
+                    ct[i] + "\t" + tat[i] + "\t" + wt[i]);
         }
 
         System.out.printf("\nAverage Turnaround Time: %.2f", totalTAT / n);
