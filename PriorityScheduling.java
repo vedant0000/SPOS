@@ -1,18 +1,5 @@
 import java.util.*;
 
-class Process {
-    int pid, arrivalTime, burstTime, priority;
-    int completionTime, turnAroundTime, waitingTime;
-    boolean isCompleted = false;
-
-    Process(int pid, int at, int bt, int prio) {
-        this.pid = pid;
-        this.arrivalTime = at;
-        this.burstTime = bt;
-        this.priority = prio;
-    }
-}
-
 public class PriorityScheduling {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -21,34 +8,43 @@ public class PriorityScheduling {
         System.out.print("Enter number of processes: ");
         int n = sc.nextInt();
 
-        Process[] processes = new Process[n];
+        int[] pid = new int[n];
+        int[] at = new int[n];
+        int[] bt = new int[n];
+        int[] prio = new int[n];
+        int[] ct = new int[n];
+        int[] tat = new int[n];
+        int[] wt = new int[n];
+        boolean[] completed = new boolean[n];
 
+        // Input process details
         for (int i = 0; i < n; i++) {
-            System.out.println("\nEnter details for Process " + (i + 1) + ":");
+            pid[i] = i + 1;
+            System.out.println("\nEnter details for Process " + pid[i] + ":");
             System.out.print("Arrival Time: ");
-            int at = sc.nextInt();
+            at[i] = sc.nextInt();
             System.out.print("Burst Time: ");
-            int bt = sc.nextInt();
+            bt[i] = sc.nextInt();
             System.out.print("Priority (lower number = higher priority): ");
-            int prio = sc.nextInt();
-            processes[i] = new Process(i + 1, at, bt, prio);
+            prio[i] = sc.nextInt();
         }
 
-        int completed = 0, currentTime = 0;
+        int completedCount = 0, currentTime = 0;
         double totalTAT = 0, totalWT = 0;
 
-        while (completed < n) {
+        while (completedCount < n) {
             int idx = -1;
             int highestPriority = Integer.MAX_VALUE;
 
+            // Find highest priority process that has arrived
             for (int i = 0; i < n; i++) {
-                Process p = processes[i];
-                if (!p.isCompleted && p.arrivalTime <= currentTime) {
-                    if (p.priority < highestPriority) {
-                        highestPriority = p.priority;
+                if (!completed[i] && at[i] <= currentTime) {
+                    if (prio[i] < highestPriority) {
+                        highestPriority = prio[i];
                         idx = i;
-                    } else if (p.priority == highestPriority) {
-                        if (p.arrivalTime < processes[idx].arrivalTime) {
+                    } else if (prio[i] == highestPriority) {
+                        // Tie-breaker: earlier arrival
+                        if (at[i] < at[idx]) {
                             idx = i;
                         }
                     }
@@ -56,26 +52,26 @@ public class PriorityScheduling {
             }
 
             if (idx != -1) {
-                Process p = processes[idx];
-                p.completionTime = currentTime + p.burstTime;
-                p.turnAroundTime = p.completionTime - p.arrivalTime;
-                p.waitingTime = p.turnAroundTime - p.burstTime;
+                ct[idx] = currentTime + bt[idx];
+                tat[idx] = ct[idx] - at[idx];
+                wt[idx] = tat[idx] - bt[idx];
 
-                totalTAT += p.turnAroundTime;
-                totalWT += p.waitingTime;
+                totalTAT += tat[idx];
+                totalWT += wt[idx];
 
-                currentTime = p.completionTime;
-                p.isCompleted = true;
-                completed++;
+                currentTime = ct[idx];
+                completed[idx] = true;
+                completedCount++;
             } else {
-                currentTime++; // CPU is idle
+                currentTime++; // CPU idle
             }
         }
 
+        // Output
         System.out.println("\nPID\tAT\tBT\tPRIO\tCT\tTAT\tWT");
-        for (Process p : processes) {
-            System.out.println("P" + p.pid + "\t" + p.arrivalTime + "\t" + p.burstTime + "\t" +
-                    p.priority + "\t" + p.completionTime + "\t" + p.turnAroundTime + "\t" + p.waitingTime);
+        for (int i = 0; i < n; i++) {
+            System.out.println("P" + pid[i] + "\t" + at[i] + "\t" + bt[i] + "\t" +
+                    prio[i] + "\t" + ct[i] + "\t" + tat[i] + "\t" + wt[i]);
         }
 
         System.out.printf("\nAverage Turnaround Time: %.2f", totalTAT / n);
